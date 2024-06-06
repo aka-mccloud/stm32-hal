@@ -1,0 +1,1239 @@
+// #![allow(dead_code)]
+
+extern crate stm32f429 as pac;
+
+use core::marker::PhantomData;
+
+use pac::{ gpioa, interrupt };
+
+use crate::PeripheralRef;
+
+pub struct GPIOA {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOA {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOA {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*pac::GPIOA::ptr()
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpioaen().set_bit());
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpioaen().clear_bit());
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpioarst().set_bit());
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpioarst().clear_bit());
+        }
+    }
+}
+
+pub struct GPIOB {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOB {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOB {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*(pac::GPIOB::ptr() as *const _)
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpioben().set_bit());
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpioben().clear_bit());
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiobrst().set_bit());
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiobrst().clear_bit());
+        }
+    }
+}
+
+pub struct GPIOC {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOC {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOC {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*(pac::GPIOC::ptr() as *const _)
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpiocen().set_bit());
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpiocen().clear_bit());
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiocrst().set_bit());
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiocrst().clear_bit());
+        }
+    }
+}
+
+pub struct GPIOD {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOD {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOD {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*(pac::GPIOD::ptr() as *const _)
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpioden().set_bit());
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpioden().clear_bit());
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiodrst().set_bit());
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiodrst().clear_bit());
+        }
+    }
+}
+
+pub struct GPIOE {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOE {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOE {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*(pac::GPIOE::ptr() as *const _)
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpioeen().set_bit());
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpioeen().clear_bit());
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpioerst().set_bit());
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpioerst().clear_bit());
+        }
+    }
+}
+
+pub struct GPIOF {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOF {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOF {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*(pac::GPIOF::ptr() as *const _)
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpiofen().set_bit());
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpiofen().clear_bit());
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiofrst().set_bit());
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiofrst().clear_bit());
+        }
+    }
+}
+
+pub struct GPIOG {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOG {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOG {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*(pac::GPIOG::ptr() as *const _)
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpiogen().set_bit());
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpiogen().clear_bit());
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiogrst().set_bit());
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiogrst().clear_bit());
+        }
+    }
+}
+
+pub struct GPIOH {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOH {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOH {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*(pac::GPIOH::ptr() as *const _)
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpiohen().set_bit());
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpiohen().clear_bit());
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiohrst().set_bit());
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiohrst().clear_bit());
+        }
+    }
+}
+
+pub struct GPIOI {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOI {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOI {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*(pac::GPIOI::ptr() as *const _)
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpioien().set_bit());
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1enr.modify(#[inline] |_, w| w.gpioien().clear_bit());
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpioirst().set_bit());
+            rcc.ahb1rstr.modify(#[inline] |_, w| w.gpioirst().clear_bit());
+        }
+    }
+}
+
+pub struct GPIOJ {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOJ {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOJ {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*(pac::GPIOJ::ptr() as *const _)
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            // rcc.ahb1enr.modify(#[inline] |_, w| w.gpiojen().set_bit());
+            rcc.ahb1enr.modify(#[inline] |r, w| w.bits(r.bits() | 0b0000_0010_0000_0000u32));
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            // rcc.ahb1enr.modify(#[inline] |_, w| w.gpiojen().clear_bit());
+            rcc.ahb1enr.modify(#[inline] |r, w| w.bits(r.bits() & !0b0000_0010_0000_0000u32));
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            // rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiojrst().set_bit());
+            // rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiojrst().clear_bit());
+            rcc.ahb1rstr.modify(#[inline] |r, w| w.bits(r.bits() | 0b0000_0010_0000_0000u32));
+            rcc.ahb1rstr.modify(#[inline] |r, w| w.bits(r.bits() & !0b0000_0010_0000_0000u32));
+        }
+    }
+}
+
+pub struct GPIOK {
+    _marker: PhantomData<*mut ()>,
+}
+
+impl GPIOK {
+    pub const fn take() -> Self {
+        Self { _marker: PhantomData }
+    }
+
+    pub const fn pin<const N: usize>() -> Pin<Self, N> {
+        Pin { _marker0: PhantomData }
+    }
+}
+
+impl PeripheralRef for GPIOK {
+    type Target = gpioa::RegisterBlock;
+
+    unsafe fn regs() -> &'static Self::Target {
+        &*(pac::GPIOK::ptr() as *const _)
+    }
+
+    fn enable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            // rcc.ahb1enr.modify(#[inline] |_, w| w.gpioken().set_bit());
+            rcc.ahb1enr.modify(#[inline] |r, w| w.bits(r.bits() | 0b0000_0100_0000_0000u32));
+        }
+    }
+
+    fn disable_clock() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            // rcc.ahb1enr.modify(#[inline] |_, w| w.gpioken().clear_bit());
+            rcc.ahb1enr.modify(#[inline] |r, w| w.bits(r.bits() & !0b0000_0100_0000_0000u32));
+        }
+    }
+
+    fn reset() {
+        unsafe {
+            let rcc = &*pac::RCC::ptr();
+            // rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiokrst().set_bit());
+            // rcc.ahb1rstr.modify(#[inline] |_, w| w.gpiokrst().clear_bit());
+            rcc.ahb1rstr.modify(#[inline] |r, w| w.bits(r.bits() | 0b0000_0100_0000_0000u32));
+            rcc.ahb1rstr.modify(#[inline] |r, w| w.bits(r.bits() & !0b0000_0100_0000_0000u32));
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PinMode {
+    Input = 0b00,
+    Output = 0b01,
+    Alternate = 0b10,
+    Analog = 0b11,
+}
+
+impl PinMode {
+    pub fn from_bits(val: u32) -> Self {
+        match val {
+            0b00 => Self::Input,
+            0b01 => Self::Output,
+            0b10 => Self::Alternate,
+            0b11 => Self::Analog,
+            _ => panic!(),
+        }
+    }
+
+    pub fn into_bits(&self) -> u32 {
+        *self as _
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum OutputType {
+    PushPull = 0b0,
+    OpenDrain = 0b1,
+}
+
+impl OutputType {
+    pub fn from_bits(val: u32) -> Self {
+        match val {
+            0b0 => Self::PushPull,
+            0b1 => Self::OpenDrain,
+            _ => panic!(),
+        }
+    }
+
+    pub fn into_bits(&self) -> u32 {
+        *self as _
+    }
+}
+
+impl Into<bool> for OutputType {
+    fn into(self) -> bool {
+        match self {
+            OutputType::PushPull => false,
+            OutputType::OpenDrain => true,
+        }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Speed {
+    Low = 0b00,
+    Medium = 0b01,
+    High = 0b10,
+    VeryHigh = 0b11,
+}
+
+impl Speed {
+    pub fn from_bits(val: u32) -> Self {
+        match val {
+            0b00 => Self::Low,
+            0b01 => Self::Medium,
+            0b10 => Self::High,
+            0b11 => Self::VeryHigh,
+            _ => panic!(),
+        }
+    }
+
+    pub fn into_bits(&self) -> u32 {
+        *self as _
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Pull {
+    None = 0b00,
+    Up = 0b01,
+    Down = 0b10,
+}
+
+impl Pull {
+    pub fn from_bits(val: u32) -> Self {
+        match val {
+            0b00 => Self::None,
+            0b01 => Self::Up,
+            0b10 => Self::Down,
+            _ => panic!(),
+        }
+    }
+
+    pub fn into_bits(&self) -> u32 {
+        *self as _
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Level {
+    Low = 0b0,
+    High = 0b1,
+}
+
+impl Level {
+    pub fn from_bits(val: u32) -> Self {
+        match val {
+            0b0 => Self::Low,
+            0b1 => Self::High,
+            _ => panic!(),
+        }
+    }
+
+    pub fn into_bits(&self) -> u32 {
+        *self as _
+    }
+}
+
+impl From<Level> for bool {
+    fn from(value: Level) -> Self {
+        match value {
+            Level::Low => false,
+            Level::High => true,
+        }
+    }
+}
+
+impl From<bool> for Level {
+    fn from(value: bool) -> Self {
+        match value {
+            true => Level::High,
+            false => Level::Low,
+        }
+    }
+}
+
+pub enum InterruptType {
+    None,
+    RisingEdge,
+    FallingEdge,
+    RisingFallingEdge,
+}
+
+pub struct Pin<P, const N: usize> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    _marker0: PhantomData<P>,
+}
+
+impl<P, const N: usize> Pin<P, N> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pub fn as_input(self, pull: Pull) -> Input<P, N> {
+        P::enable_clock();
+
+        Input::new(self, pull)
+    }
+
+    pub fn as_output(self, speed: Speed) -> Output<P, N> {
+        P::enable_clock();
+
+        Output::new(self, speed)
+    }
+
+    pub fn as_open_drain(self, speed: Speed, pull: Pull) -> OpenDrain<P, N> {
+        P::enable_clock();
+
+        OpenDrain::new(self, speed, pull)
+    }
+
+    pub fn as_alternate(
+        self,
+        otype: OutputType,
+        speed: Speed,
+        pull: Pull,
+        func: u8
+    ) -> Alternate<P, N> {
+        P::enable_clock();
+
+        Alternate::new(self, otype, speed, pull, func)
+    }
+
+    pub fn as_analog(self) -> Analog<P, N> {
+        P::enable_clock();
+
+        Analog::new(self)
+    }
+
+    #[inline]
+    pub fn set_mode(&mut self, mode: PinMode) {
+        unsafe {
+            let regs = P::regs();
+            regs.moder.modify(|r, w| {
+                let mut bits = r.bits();
+                bits &= !(0b11u32 << (N * 2));
+                bits |= (mode as u32) << (N * 2);
+                w.bits(bits)
+            });
+        }
+    }
+
+    #[inline]
+    pub fn set_output_type(&mut self, output_type: OutputType) {
+        unsafe {
+            let regs = P::regs();
+            regs.otyper.modify(|r, w| {
+                let mut bits = r.bits();
+                bits &= !(0b1u32 << N);
+                bits |= (output_type as u32) << N;
+                w.bits(bits)
+            });
+        }
+    }
+
+    #[inline]
+    pub fn set_speed(&mut self, speed: Speed) {
+        unsafe {
+            let regs = P::regs();
+            regs.ospeedr.modify(|r, w| {
+                let mut bits = r.bits();
+                bits &= !(0b11u32 << (N * 2));
+                bits |= (speed as u32) << (N * 2);
+                w.bits(bits)
+            });
+        }
+    }
+
+    #[inline]
+    pub fn set_pull(&mut self, pull: Pull) {
+        unsafe {
+            let regs = P::regs();
+            regs.pupdr.modify(|r, w| {
+                let mut bits = r.bits();
+                bits &= !(0b11u32 << (N * 2));
+                bits |= (pull as u32) << (N * 2);
+                w.bits(bits)
+            });
+        }
+    }
+
+    #[inline]
+    pub fn set_alternate_function(&mut self, func: u8) {
+        unsafe {
+            let regs = P::regs();
+            if N < 8 {
+                regs.afrl.modify(|r, w| {
+                    let mut bits = r.bits();
+                    bits &= !(0b1111u32 << (N * 4));
+                    bits |= (func as u32) << (N * 4);
+                    w.bits(bits)
+                });
+            } else {
+                regs.afrh.modify(|r, w| {
+                    let mut bits = r.bits();
+                    bits &= !(0b1111u32 << ((N - 8) * 4));
+                    bits |= (func as u32) << ((N - 8) * 4);
+                    w.bits(bits)
+                });
+            }
+        }
+    }
+
+    #[inline]
+    pub fn is_output_high(&self) -> bool {
+        unsafe {
+            let regs = P::regs();
+            (regs.odr.read().bits() & (0b1u32 << N)) != 0
+        }
+    }
+
+    #[inline]
+    pub fn is_output_low(&self) -> bool {
+        !self.is_output_high()
+    }
+
+    #[inline]
+    pub fn get_output_level(&self) -> Level {
+        self.is_output_high().into()
+    }
+
+    #[inline]
+    pub fn set_output_low(&mut self) {
+        unsafe {
+            let regs = P::regs();
+            regs.bsrr.write(|w| { w.bits(0b1u32 << (N + 16)) });
+        }
+    }
+
+    #[inline]
+    pub fn set_output_high(&mut self) {
+        unsafe {
+            let regs = P::regs();
+            regs.bsrr.write(|w| { w.bits(0b1u32 << N) });
+        }
+    }
+
+    #[inline]
+    pub fn toggle_output(&mut self) {
+        match self.is_output_high() {
+            true => self.set_output_low(),
+            false => self.set_output_high(),
+        }
+    }
+
+    #[inline]
+    pub fn is_input_high(&self) -> bool {
+        unsafe {
+            let regs = P::regs();
+            (regs.idr.read().bits() & (0b1u32 << N)) != 0
+        }
+    }
+
+    #[inline]
+    pub fn is_input_low(&self) -> bool {
+        !self.is_output_high()
+    }
+
+    #[inline]
+    pub fn get_input_level(&self) -> Level {
+        self.is_input_high().into()
+    }
+}
+
+pub type InterruptHandler = fn();
+
+fn default_handler() {}
+
+static mut IRQ_HANDLERS: [InterruptHandler; 16] = [default_handler; 16];
+
+pub struct Input<P, const N: usize> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pin: Pin<P, N>,
+}
+
+impl<P, const N: usize> Input<P, N> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pub fn new(pin: Pin<P, N>, pull: Pull) -> Self {
+        let mut input = Self { pin };
+
+        input.pin.set_mode(PinMode::Input);
+        input.pin.set_pull(pull);
+        input
+    }
+
+    pub fn get_level(&self) -> Level {
+        self.pin.get_input_level()
+    }
+
+    pub fn is_high(&self) -> bool {
+        self.pin.is_input_high()
+    }
+
+    pub fn is_low(&self) -> bool {
+        self.pin.is_input_low()
+    }
+
+    pub fn set_irq_handler(&mut self, interrupt_type: InterruptType, f: InterruptHandler) {
+        unsafe {
+            let mut p = pac::CorePeripherals::steal();
+            p.NVIC.enable(pac::Interrupt::EXTI0);
+            p.NVIC.enable(pac::Interrupt::EXTI1);
+            p.NVIC.enable(pac::Interrupt::EXTI2);
+            p.NVIC.enable(pac::Interrupt::EXTI3);
+            p.NVIC.enable(pac::Interrupt::EXTI4);
+            p.NVIC.enable(pac::Interrupt::EXTI9_5);
+            p.NVIC.enable(pac::Interrupt::EXTI15_10);
+
+            let port_num =
+                ((P::regs() as *const _ as u32) - (GPIOA::regs() as *const _ as u32)) / 0x400u32;
+            let syscfg = &*(pac::SYSCFG::ptr() as *const pac::syscfg::RegisterBlock);
+            match N / 4 {
+                0 =>
+                    syscfg.exticr1.modify(|r, w| {
+                        let mut bits = r.bits();
+                        bits &= !(0b1111u32 << N % 4);
+                        bits |= port_num << N % 4;
+                        w.bits(bits)
+                    }),
+                1 =>
+                    syscfg.exticr2.modify(|r, w| {
+                        let mut bits = r.bits();
+                        bits &= !(0b1111u32 << N % 4);
+                        bits |= port_num << N % 4;
+                        w.bits(bits)
+                    }),
+                2 =>
+                    syscfg.exticr3.modify(|r, w| {
+                        let mut bits = r.bits();
+                        bits &= !(0b1111u32 << N % 4);
+                        bits |= port_num << N % 4;
+                        w.bits(bits)
+                    }),
+                3 =>
+                    syscfg.exticr4.modify(|r, w| {
+                        let mut bits = r.bits();
+                        bits &= !(0b1111u32 << N % 4);
+                        bits |= port_num << N % 4;
+                        w.bits(bits)
+                    }),
+                _ => panic!(),
+            }
+
+            let exti = &*(pac::EXTI::ptr() as *const pac::exti::RegisterBlock);
+
+            match interrupt_type {
+                InterruptType::None => (),
+                InterruptType::RisingEdge => {
+                    exti.rtsr.modify(|r, w| {
+                        let mut bits = r.bits();
+                        bits |= 0b1u32 << N;
+                        w.bits(bits)
+                    });
+                    exti.ftsr.modify(|r, w| {
+                        let mut bits = r.bits();
+                        bits &= !(0b1u32 << N);
+                        w.bits(bits)
+                    });
+                }
+                InterruptType::FallingEdge => {
+                    exti.rtsr.modify(|r, w| {
+                        let mut bits = r.bits();
+                        bits &= !(0b1u32 << N);
+                        w.bits(bits)
+                    });
+                    exti.ftsr.modify(|r, w| {
+                        let mut bits = r.bits();
+                        bits |= 0b1u32 << N;
+                        w.bits(bits)
+                    });
+                }
+                InterruptType::RisingFallingEdge => {
+                    exti.rtsr.modify(|r, w| {
+                        let mut bits = r.bits();
+                        bits |= 0b1u32 << N;
+                        w.bits(bits)
+                    });
+                    exti.ftsr.modify(|r, w| {
+                        let mut bits = r.bits();
+                        bits |= 0b1u32 << N;
+                        w.bits(bits)
+                    });
+                }
+            }
+
+            exti.imr.modify(|r, w| {
+                let mut bits = r.bits();
+                bits |= 0b1u32 << N;
+                w.bits(bits)
+            });
+
+            IRQ_HANDLERS[N] = f;
+        }
+    }
+}
+
+impl<P, const N: usize> Drop for Input<P, N> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    fn drop(&mut self) {
+        self.pin.set_mode(PinMode::Analog);
+        self.pin.set_output_type(OutputType::PushPull);
+        self.pin.set_speed(Speed::Low);
+        self.pin.set_pull(Pull::None);
+        self.pin.set_alternate_function(0);
+    }
+}
+
+pub struct Output<P, const N: usize> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pin: Pin<P, N>,
+}
+
+impl<P, const N: usize> Output<P, N> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pub fn new(pin: Pin<P, N>, speed: Speed) -> Self {
+        let mut output = Self { pin };
+
+        output.pin.set_mode(PinMode::Output);
+        output.pin.set_output_type(OutputType::PushPull);
+        output.pin.set_speed(speed);
+        output.pin.set_pull(Pull::None);
+        output
+    }
+
+    pub fn get_level(&self) -> Level {
+        self.pin.get_output_level()
+    }
+
+    pub fn is_high(&self) -> bool {
+        self.pin.is_output_high()
+    }
+
+    pub fn is_low(&self) -> bool {
+        self.pin.is_output_low()
+    }
+
+    pub fn set_level(&mut self, level: Level) {
+        match level {
+            Level::Low => self.set_low(),
+            Level::High => self.set_high(),
+        }
+    }
+
+    pub fn set_high(&mut self) {
+        self.pin.set_output_high()
+    }
+
+    pub fn set_low(&mut self) {
+        self.pin.set_output_low()
+    }
+
+    pub fn toggle(&mut self) {
+        self.pin.toggle_output()
+    }
+}
+
+impl<P, const N: usize> Drop for Output<P, N> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    fn drop(&mut self) {
+        self.pin.set_mode(PinMode::Analog);
+        self.pin.set_output_type(OutputType::PushPull);
+        self.pin.set_speed(Speed::Low);
+        self.pin.set_pull(Pull::None);
+        self.pin.set_alternate_function(0);
+    }
+}
+
+pub struct OpenDrain<P, const N: usize> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pin: Pin<P, N>,
+}
+
+impl<P, const N: usize> OpenDrain<P, N> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pub fn new(pin: Pin<P, N>, speed: Speed, pull: Pull) -> Self {
+        let mut od = Self { pin };
+
+        od.pin.set_mode(PinMode::Output);
+        od.pin.set_output_type(OutputType::OpenDrain);
+        od.pin.set_speed(speed);
+        od.pin.set_pull(pull);
+        od
+    }
+
+    pub fn get_level(&self) -> Level {
+        self.pin.get_output_level()
+    }
+
+    pub fn is_high(&self) -> bool {
+        self.pin.is_output_high()
+    }
+
+    pub fn is_low(&self) -> bool {
+        self.pin.is_output_low()
+    }
+
+    pub fn set_level(&mut self, level: Level) {
+        match level {
+            Level::Low => self.set_low(),
+            Level::High => self.set_high(),
+        }
+    }
+
+    pub fn set_high(&mut self) {
+        self.pin.set_output_high()
+    }
+
+    pub fn set_low(&mut self) {
+        self.pin.set_output_low()
+    }
+
+    pub fn toggle(&mut self) {
+        self.pin.toggle_output()
+    }
+}
+
+impl<P, const N: usize> Drop
+    for OpenDrain<P, N>
+    where P: PeripheralRef<Target = gpioa::RegisterBlock>
+{
+    fn drop(&mut self) {
+        self.pin.set_mode(PinMode::Analog);
+        self.pin.set_output_type(OutputType::PushPull);
+        self.pin.set_speed(Speed::Low);
+        self.pin.set_pull(Pull::None);
+        self.pin.set_alternate_function(0);
+    }
+}
+
+pub struct Alternate<P, const N: usize> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pin: Pin<P, N>,
+}
+
+impl<P, const N: usize> Alternate<P, N> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pub fn new(pin: Pin<P, N>, otype: OutputType, speed: Speed, pull: Pull, func: u8) -> Self {
+        let mut af = Self { pin };
+        af.pin.set_mode(PinMode::Alternate);
+        af.pin.set_output_type(otype);
+        af.pin.set_speed(speed);
+        af.pin.set_pull(pull);
+        af.pin.set_alternate_function(func);
+        af
+    }
+}
+
+impl<P, const N: usize> Drop
+    for Alternate<P, N>
+    where P: PeripheralRef<Target = gpioa::RegisterBlock>
+{
+    fn drop(&mut self) {
+        self.pin.set_mode(PinMode::Analog);
+        self.pin.set_output_type(OutputType::PushPull);
+        self.pin.set_speed(Speed::Low);
+        self.pin.set_pull(Pull::None);
+        self.pin.set_alternate_function(0);
+    }
+}
+
+pub struct Analog<P, const N: usize> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pin: Pin<P, N>,
+}
+
+impl<P, const N: usize> Analog<P, N> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    pub fn new(pin: Pin<P, N>) -> Self {
+        let mut analog = Self { pin };
+
+        analog.pin.set_mode(PinMode::Analog);
+        analog.pin.set_pull(Pull::None);
+        analog
+    }
+}
+
+impl<P, const N: usize> Drop for Analog<P, N> where P: PeripheralRef<Target = gpioa::RegisterBlock> {
+    fn drop(&mut self) {
+        self.pin.set_mode(PinMode::Analog);
+        self.pin.set_output_type(OutputType::PushPull);
+        self.pin.set_speed(Speed::Low);
+        self.pin.set_pull(Pull::None);
+        self.pin.set_alternate_function(0);
+    }
+}
+
+#[interrupt]
+unsafe fn EXTI0() {
+    let exti = &*(pac::EXTI::ptr() as *const pac::exti::RegisterBlock);
+
+    // clear pending bit
+    exti.pr.write(|w| w.pr0().set_bit());
+
+    (IRQ_HANDLERS[0])();
+}
+
+#[interrupt]
+unsafe fn EXTI1() {
+    let exti = &*(pac::EXTI::ptr() as *const pac::exti::RegisterBlock);
+
+    // clear pending bit
+    exti.pr.write(|w| w.pr1().set_bit());
+
+    (IRQ_HANDLERS[1])();
+}
+
+#[interrupt]
+unsafe fn EXTI2() {
+    let exti = &*(pac::EXTI::ptr() as *const pac::exti::RegisterBlock);
+
+    // clear pending bit
+    exti.pr.write(|w| w.pr2().set_bit());
+
+    (IRQ_HANDLERS[2])();
+}
+
+#[interrupt]
+unsafe fn EXTI3() {
+    let exti = &*(pac::EXTI::ptr() as *const pac::exti::RegisterBlock);
+
+    // clear pending bit
+    exti.pr.write(|w| w.pr3().set_bit());
+
+    (IRQ_HANDLERS[3])();
+}
+
+#[interrupt]
+unsafe fn EXTI4() {
+    let exti = &*(pac::EXTI::ptr() as *const pac::exti::RegisterBlock);
+
+    // clear pending bit
+    exti.pr.write(|w| w.pr4().set_bit());
+
+    (IRQ_HANDLERS[4])();
+}
+
+#[interrupt]
+unsafe fn EXTI9_5() {
+    let exti = &*(pac::EXTI::ptr() as *const pac::exti::RegisterBlock);
+
+    let bits = exti.pr.read();
+    if bits.pr5().bit_is_set() {
+        exti.pr.write(|w| w.pr5().set_bit());
+        (IRQ_HANDLERS[5])();
+    }
+    if bits.pr6().bit_is_set() {
+        exti.pr.write(|w| w.pr6().set_bit());
+        (IRQ_HANDLERS[6])();
+    }
+    if bits.pr7().bit_is_set() {
+        exti.pr.write(|w| w.pr7().set_bit());
+        (IRQ_HANDLERS[7])();
+    }
+    if bits.pr8().bit_is_set() {
+        exti.pr.write(|w| w.pr8().set_bit());
+        (IRQ_HANDLERS[8])();
+    }
+    if bits.pr9().bit_is_set() {
+        exti.pr.write(|w| w.pr9().set_bit());
+        (IRQ_HANDLERS[9])();
+    }
+}
+
+#[interrupt]
+unsafe fn EXTI15_10() {
+    let exti = &*(pac::EXTI::ptr() as *const pac::exti::RegisterBlock);
+
+    let bits = exti.pr.read();
+    if bits.pr10().bit_is_set() {
+        exti.pr.write(|w| w.pr10().set_bit());
+        (IRQ_HANDLERS[10])();
+    }
+    if bits.pr11().bit_is_set() {
+        exti.pr.write(|w| w.pr11().set_bit());
+        (IRQ_HANDLERS[11])();
+    }
+    if bits.pr12().bit_is_set() {
+        exti.pr.write(|w| w.pr12().set_bit());
+        (IRQ_HANDLERS[12])();
+    }
+    if bits.pr13().bit_is_set() {
+        exti.pr.write(|w| w.pr13().set_bit());
+        (IRQ_HANDLERS[13])();
+    }
+    if bits.pr14().bit_is_set() {
+        exti.pr.write(|w| w.pr14().set_bit());
+        (IRQ_HANDLERS[14])();
+    }
+    if bits.pr15().bit_is_set() {
+        exti.pr.write(|w| w.pr15().set_bit());
+        (IRQ_HANDLERS[15])();
+    }
+}
