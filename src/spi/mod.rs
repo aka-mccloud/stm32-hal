@@ -1,6 +1,6 @@
-use core::{ fmt, mem, slice };
+use core::{ fmt, mem, ptr::addr_of, slice };
 
-use crate::{ Peripheral, PeripheralRef };
+use crate::{ pac, rcc::RCC, Peripheral, PeripheralRef };
 
 pub struct SPI(pac::spi1::RegisterBlock);
 
@@ -10,7 +10,7 @@ impl PeripheralRef for SPI1 {
     type Output = SPI;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::SPI1::ptr() as *mut _) }
+        unsafe { (pac::SPI1::PTR as *mut Self::Output).as_mut().unwrap() }
     }
 }
 
@@ -20,7 +20,7 @@ impl PeripheralRef for SPI2 {
     type Output = SPI;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::SPI2::ptr() as *mut _) }
+        unsafe { (pac::SPI2::PTR as *mut Self::Output).as_mut().unwrap() }
     }
 }
 
@@ -30,7 +30,7 @@ impl PeripheralRef for SPI3 {
     type Output = SPI;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::SPI3::ptr() as *mut _) }
+        unsafe { (pac::SPI3::PTR as *mut Self::Output).as_mut().unwrap() }
     }
 }
 
@@ -40,7 +40,7 @@ impl PeripheralRef for SPI4 {
     type Output = SPI;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::SPI4::ptr() as *mut _) }
+        unsafe { (pac::SPI4::PTR as *mut Self::Output).as_mut().unwrap() }
     }
 }
 
@@ -50,7 +50,7 @@ impl PeripheralRef for SPI5 {
     type Output = SPI;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::SPI5::ptr() as *mut _) }
+        unsafe { (pac::SPI5::PTR as *mut Self::Output).as_mut().unwrap() }
     }
 }
 
@@ -60,99 +60,86 @@ impl PeripheralRef for SPI6 {
     type Output = SPI;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::SPI6::ptr() as *mut _) }
+        unsafe { (pac::SPI6::PTR as *mut Self::Output).as_mut().unwrap() }
     }
 }
 
 impl Peripheral for SPI {
     fn enable_clock(&mut self) {
-        embedded_hal::spi::
-        unsafe {
-            let rcc = &*pac::RCC::ptr();
-            let ptr = &self.0 as *const _;
+        let rcc = RCC::take();
+        let ptr = addr_of!(self.0);
 
-            if ptr == pac::SPI1::ptr() {
-                rcc.apb2enr.modify(|_, w| w.spi1en().set_bit());
-            } else if ptr == pac::SPI2::ptr() {
-                rcc.apb1enr.modify(|_, w| w.spi2en().set_bit());
-            } else if ptr == pac::SPI3::ptr() {
-                rcc.apb1enr.modify(|_, w| w.spi3en().set_bit());
-            } else if ptr == pac::SPI4::ptr() {
-                rcc.apb2enr.modify(|_, w| w.spi4en().set_bit());
-            } else if ptr == pac::SPI5::ptr() {
-                rcc.apb2enr.modify(|_, w| w.spi5en().set_bit());
-            } else if ptr == pac::SPI6::ptr() {
-                rcc.apb2enr.modify(|_, w| w.spi6en().set_bit());
-            } else {
-                panic!();
-            }
+        match ptr {
+            pac::SPI1::PTR => rcc.apb2enr().modify(|_, w| w.spi1en().set_bit()),
+            pac::SPI2::PTR => rcc.apb1enr().modify(|_, w| w.spi2en().set_bit()),
+            pac::SPI3::PTR => rcc.apb1enr().modify(|_, w| w.spi3en().set_bit()),
+            pac::SPI4::PTR => rcc.apb2enr().modify(|_, w| w.spi4en().set_bit()),
+            pac::SPI5::PTR => rcc.apb2enr().modify(|_, w| w.spi5en().set_bit()),
+            pac::SPI6::PTR => rcc.apb2enr().modify(|_, w| w.spi6en().set_bit()),
+            _ => panic!(),
         }
     }
 
     fn disable_clock(&mut self) {
-        unsafe {
-            let rcc = &*pac::RCC::ptr();
-            let ptr = &self.0 as *const _;
+        let rcc = RCC::take();
+        let ptr = addr_of!(self.0);
 
-            if ptr == pac::SPI1::ptr() {
-                rcc.apb2enr.modify(|_, w| w.spi1en().clear_bit());
-            } else if ptr == pac::SPI2::ptr() {
-                rcc.apb1enr.modify(|_, w| w.spi2en().clear_bit());
-            } else if ptr == pac::SPI3::ptr() {
-                rcc.apb1enr.modify(|_, w| w.spi3en().clear_bit());
-            } else if ptr == pac::SPI4::ptr() {
-                rcc.apb2enr.modify(|_, w| w.spi4en().clear_bit());
-            } else if ptr == pac::SPI5::ptr() {
-                rcc.apb2enr.modify(|_, w| w.spi5en().clear_bit());
-            } else if ptr == pac::SPI6::ptr() {
-                rcc.apb2enr.modify(|_, w| w.spi6en().clear_bit());
-            } else {
-                panic!();
-            }
+        match ptr {
+            pac::SPI1::PTR => rcc.apb2enr().modify(|_, w| w.spi1en().clear_bit()),
+            pac::SPI2::PTR => rcc.apb1enr().modify(|_, w| w.spi2en().clear_bit()),
+            pac::SPI3::PTR => rcc.apb1enr().modify(|_, w| w.spi3en().clear_bit()),
+            pac::SPI4::PTR => rcc.apb2enr().modify(|_, w| w.spi4en().clear_bit()),
+            pac::SPI5::PTR => rcc.apb2enr().modify(|_, w| w.spi5en().clear_bit()),
+            pac::SPI6::PTR => rcc.apb2enr().modify(|_, w| w.spi6en().clear_bit()),
+            _ => panic!(),
         }
     }
 
     fn reset(&mut self) {
-        unsafe {
-            let rcc = &*pac::RCC::ptr();
-            let ptr = &self.0 as *const _;
+        let rcc = RCC::take();
+        let ptr = addr_of!(self.0);
 
-            if ptr == pac::SPI1::ptr() {
-                rcc.apb2rstr.modify(|_, w| w.spi1rst().set_bit());
-                rcc.apb2rstr.modify(|_, w| w.spi1rst().clear_bit());
-            } else if ptr == pac::SPI2::ptr() {
-                rcc.apb1rstr.modify(|_, w| w.spi2rst().set_bit());
-                rcc.apb1rstr.modify(|_, w| w.spi2rst().clear_bit());
-            } else if ptr == pac::SPI3::ptr() {
-                rcc.apb1rstr.modify(|_, w| w.spi3rst().set_bit());
-                rcc.apb1rstr.modify(|_, w| w.spi3rst().clear_bit());
-            } else if ptr == pac::SPI4::ptr() {
-                rcc.apb2rstr.modify(|_, w| w.spi4rst().set_bit());
-                rcc.apb2rstr.modify(|_, w| w.spi4rst().clear_bit());
-            } else if ptr == pac::SPI5::ptr() {
-                rcc.apb2rstr.modify(|_, w| w.spi5rst().set_bit());
-                rcc.apb2rstr.modify(|_, w| w.spi5rst().clear_bit());
-            } else if ptr == pac::SPI6::ptr() {
-                rcc.apb2rstr.modify(|_, w| w.spi6rst().set_bit());
-                rcc.apb2rstr.modify(|_, w| w.spi6rst().clear_bit());
-            } else {
-                panic!()
+        match ptr {
+            pac::SPI1::PTR => {
+                rcc.apb2rstr().modify(|_, w| w.spi1rst().set_bit());
+                rcc.apb2rstr().modify(|_, w| w.spi1rst().clear_bit());
             }
+            pac::SPI2::PTR => {
+                rcc.apb1rstr().modify(|_, w| w.spi2rst().set_bit());
+                rcc.apb1rstr().modify(|_, w| w.spi2rst().clear_bit());
+            }
+            pac::SPI3::PTR => {
+                rcc.apb1rstr().modify(|_, w| w.spi3rst().set_bit());
+                rcc.apb1rstr().modify(|_, w| w.spi3rst().clear_bit());
+            }
+            pac::SPI4::PTR => {
+                rcc.apb2rstr().modify(|_, w| w.spi4rst().set_bit());
+                rcc.apb2rstr().modify(|_, w| w.spi4rst().clear_bit());
+            }
+            pac::SPI5::PTR => {
+                rcc.apb2rstr().modify(|_, w| w.spi5rst().set_bit());
+                rcc.apb2rstr().modify(|_, w| w.spi5rst().clear_bit());
+            }
+            pac::SPI6::PTR => {
+                rcc.apb2rstr().modify(|_, w| w.spi6rst().set_bit());
+                rcc.apb2rstr().modify(|_, w| w.spi6rst().clear_bit());
+            }
+            _ => panic!(),
         }
     }
 }
 
 impl SPI {
     pub fn enable(&mut self) {
-        self.0.cr1.modify(|_, w| w.spe().set_bit());
+        self.0.cr1().modify(|_, w| w.spe().set_bit());
     }
 
     pub fn disable(&mut self) {
-        self.0.cr1.modify(|_, w| w.spe().clear_bit());
+        self.0.cr1().modify(|_, w| w.spe().clear_bit());
     }
 
     pub fn is_enabled(&self) -> bool {
-        self.0.cr1.read().spe().bit()
+        self.0.cr1().read().spe().bit()
     }
 
     pub fn init(&mut self, config: SPIConfig) -> Result<()> {
@@ -161,30 +148,28 @@ impl SPI {
 
         let SPIConfig { mode, bus_config, baud_rate, data_format, cpol, cpha, ssm } = config;
 
-        unsafe {
-            self.0.cr1.modify(|_, w| {
-                w.mstr().bit(mode == Mode::Master);
-                w.ssi().bit(mode == Mode::Master);
-                match bus_config {
-                    BusConfiguration::FullDuplex => {
-                        w.bidimode().clear_bit();
-                    }
-                    BusConfiguration::HalfDuplex => {
-                        w.bidimode().set_bit();
-                    }
-                    BusConfiguration::SimplexReceiveOnly => {
-                        w.bidimode().clear_bit();
-                        w.rxonly().set_bit();
-                    }
+        self.0.cr1().modify(|_, w| {
+            w.mstr().bit(mode == Mode::Master);
+            w.ssi().bit(mode == Mode::Master);
+            match bus_config {
+                BusConfiguration::FullDuplex => {
+                    w.bidimode().clear_bit();
                 }
-                w.br().bits(baud_rate as u8);
-                w.dff().bit(data_format == DataFrameFormat::Format16Bit);
-                w.cpol().bit(cpol == ClockPolarity::IdleHigh);
-                w.cpha().bit(cpha == ClockPhase::SecondClockTransition);
-                w.ssm().bit(ssm)
-            });
-            self.0.cr2.modify(|_, w| w.ssoe().bit(ssm));
-        }
+                BusConfiguration::HalfDuplex => {
+                    w.bidimode().set_bit();
+                }
+                BusConfiguration::SimplexReceiveOnly => {
+                    w.bidimode().clear_bit();
+                    w.rxonly().set_bit();
+                }
+            }
+            w.br().set(baud_rate as u8);
+            w.dff().bit(data_format == DataFrameFormat::Format16Bit);
+            w.cpol().bit(cpol == ClockPolarity::IdleHigh);
+            w.cpha().bit(cpha == ClockPhase::SecondClockTransition);
+            w.ssm().bit(ssm)
+        });
+        self.0.cr2().modify(|_, w| w.ssoe().bit(ssm));
 
         self.enable();
 
@@ -192,14 +177,14 @@ impl SPI {
     }
 
     pub fn write_data(&mut self, data: &[u8]) -> Result<()> {
-        let dff = DataFrameFormat::from_bits(self.0.cr1.read().dff().bit() as u32);
+        let dff = DataFrameFormat::from_bits(self.0.cr1().read().dff().bit() as u32);
 
         unsafe {
             match dff {
                 DataFrameFormat::Format8Bit => {
                     for byte in data {
-                        self.0.dr.write(|w| w.dr().bits(*byte as _));
-                        while self.0.sr.read().txe().bit_is_clear() {}
+                        self.0.dr().write(|w| w.dr().set(*byte as _));
+                        while self.0.sr().read().txe().bit_is_clear() {}
                     }
                 }
                 DataFrameFormat::Format16Bit => {
@@ -208,17 +193,17 @@ impl SPI {
                         data.len() / mem::size_of::<u16>()
                     );
                     for word in data {
-                        self.0.dr.write(|w| w.dr().bits(*word));
-                        while self.0.sr.read().txe().bit_is_clear() {}
+                        self.0.dr().write(|w| w.dr().set(*word));
+                        while self.0.sr().read().txe().bit_is_clear() {}
                     }
                 }
             }
 
             // wait for busy flag is reset
-            while self.0.sr.read().bsy().bit_is_set() {}
+            while self.0.sr().read().bsy().bit_is_set() {}
 
-            let _ = self.0.dr.read().bits();
-            _ = self.0.sr.read().bits();
+            let _ = self.0.dr().read().bits();
+            _ = self.0.sr().read().bits();
         }
 
         Ok(())

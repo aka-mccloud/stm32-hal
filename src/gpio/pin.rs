@@ -5,7 +5,7 @@ use super::Port;
 use embedded_hal::digital::{ ErrorType, InputPin, OutputPin, StatefulOutputPin };
 
 pub struct Pin {
-    pub(crate) port: &'static mut Port,
+    pub(crate) port: &'static Port,
     pub(crate) pin: u8,
 }
 
@@ -15,18 +15,18 @@ impl ErrorType for Pin {
 
 impl InputPin for Pin {
     fn is_high(&mut self) -> Result<bool, Self::Error> {
-        Ok((self.port.0.idr.read().bits() & (1 << self.pin)) != 0)
+        Ok((self.port.idr().read().bits() & (1 << self.pin)) != 0)
     }
 
     fn is_low(&mut self) -> Result<bool, Self::Error> {
-        Ok((self.port.0.idr.read().bits() & (1 << self.pin)) == 0)
+        Ok((self.port.idr().read().bits() & (1 << self.pin)) == 0)
     }
 }
 
 impl OutputPin for Pin {
     fn set_low(&mut self) -> Result<(), Self::Error> {
         unsafe {
-            self.port.0.bsrr.write(|w| w.bits(1 << (self.pin + 16)));
+            self.port.bsrr().write(|w| w.bits(1 << (self.pin + 16)));
         }
 
         Ok(())
@@ -34,7 +34,7 @@ impl OutputPin for Pin {
 
     fn set_high(&mut self) -> Result<(), Self::Error> {
         unsafe {
-            self.port.0.bsrr.write(|w| w.bits(1 << self.pin));
+            self.port.bsrr().write(|w| w.bits(1 << self.pin));
         }
 
         Ok(())
@@ -43,11 +43,11 @@ impl OutputPin for Pin {
 
 impl StatefulOutputPin for Pin {
     fn is_set_high(&mut self) -> Result<bool, Self::Error> {
-        Ok((self.port.0.odr.read().bits() & (1 << self.pin)) != 0)
+        Ok((self.port.odr().read().bits() & (1 << self.pin)) != 0)
     }
 
     fn is_set_low(&mut self) -> Result<bool, Self::Error> {
-        Ok((self.port.0.odr.read().bits() & (1 << self.pin)) == 0)
+        Ok((self.port.odr().read().bits() & (1 << self.pin)) == 0)
     }
 }
 
@@ -58,7 +58,7 @@ impl Pin {
 
         unsafe {
             let pos = self.pin * 2;
-            self.port.0.moder.modify(|r, w| {
+            self.port.moder().modify(|r, w| {
                 w.bits((r.bits() & !(MASK << pos)) | ((mode as u32) << pos))
             });
         }
@@ -70,7 +70,7 @@ impl Pin {
 
         unsafe {
             let pos = self.pin;
-            self.port.0.otyper.modify(|r, w| {
+            self.port.otyper().modify(|r, w| {
                 match output_type {
                     OutputType::PushPull => w.bits(r.bits() & !(MASK << pos)),
                     OutputType::OpenDrain => w.bits(r.bits() | (MASK << pos)),
@@ -85,7 +85,7 @@ impl Pin {
 
         unsafe {
             let pos = self.pin * 2;
-            self.port.0.ospeedr.modify(|r, w| {
+            self.port.ospeedr().modify(|r, w| {
                 w.bits((r.bits() & !(MASK << pos)) | ((speed as u32) << pos))
             });
         }
@@ -97,7 +97,7 @@ impl Pin {
 
         unsafe {
             let pos = self.pin * 2;
-            self.port.0.pupdr.modify(|r, w| {
+            self.port.pupdr().modify(|r, w| {
                 w.bits((r.bits() & !(MASK << pos)) | ((pull as u32) << pos))
             });
         }
@@ -110,12 +110,12 @@ impl Pin {
         unsafe {
             if self.pin < 8 {
                 let pos = self.pin * 4;
-                self.port.0.afrl.modify(|r, w| {
+                self.port.afrl().modify(|r, w| {
                     w.bits((r.bits() & !(MASK << pos)) | ((func as u32) << pos))
                 });
             } else {
                 let pos = (self.pin % 8) * 4;
-                self.port.0.afrh.modify(|r, w| {
+                self.port.afrh().modify(|r, w| {
                     w.bits((r.bits() & !(MASK << pos)) | ((func as u32) << pos))
                 });
             }

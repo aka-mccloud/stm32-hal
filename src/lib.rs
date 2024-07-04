@@ -4,9 +4,12 @@ pub mod gpio;
 pub mod spi;
 pub mod ltdc;
 pub mod rcc;
+pub mod i2c;
 
-pub extern crate stm32f429 as pac;
+pub extern crate stm32f4_staging;
 pub extern crate embedded_hal;
+
+pub use stm32f4_staging::stm32f429 as pac;
 
 pub trait Peripheral {
     fn enable_clock(&mut self);

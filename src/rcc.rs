@@ -1,75 +1,87 @@
-use crate::PeripheralRef;
+use core::{ cell::Cell, ops::Deref };
+
+use crate::{ pac, PeripheralRef };
+
+const EXTERNAL_OSC_FREQ: core::cell::Cell<u32> = Cell::new(8_000_000u32);
 
 pub struct RCC(pac::rcc::RegisterBlock);
+
+impl Deref for RCC {
+    type Target = pac::rcc::RegisterBlock;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl PeripheralRef for RCC {
     type Output = RCC;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::RCC::ptr() as *mut _) }
+        unsafe { (pac::RCC::PTR as *mut Self::Output).as_mut().unwrap() }
     }
 }
 
 impl RCC {
     pub fn configure_system_clock(&mut self, syscfg: SystemClockConfig, buscfg: BUSConfig) {
         unsafe {
-            self.0.apb1enr.modify(|_, w| w.pwren().set_bit());
-            
-            self.0.cfgr.modify(|_, w| {
+            self.apb1enr().modify(|_, w| w.pwren().set_bit());
+
+            self.cfgr().modify(|_, w| {
                 w.hpre().bits(buscfg.ahb_prescaler as _);
                 w.ppre1().bits(buscfg.apb1_prescaler as _);
                 w.ppre2().bits(buscfg.apb2_prescaler as _)
             });
 
-            let flash = &mut *(pac::FLASH::ptr() as *mut pac::flash::RegisterBlock);
-            flash.acr.modify(|_, w| w.latency().bits(5));
-            
+            let flash = pac::FLASH::PTR.as_ref().unwrap();
+            flash.acr().modify(|_, w| w.latency().bits(5));
+
             match syscfg {
                 SystemClockConfig::HSI(t) => {
-                    if !self.0.cfgr.read().sws().is_hsi() {
-                        self.0.cr.modify(|_, w| {
+                    if !self.cfgr().read().sws().is_hsi() {
+                        self.cr().modify(|_, w| {
                             w.hsitrim().bits(t);
                             w.hsion().set_bit()
                         });
-                        while self.0.cr.read().hsirdy().bit_is_clear() {}
+                        while self.cr().read().hsirdy().bit_is_clear() {}
 
-                        self.0.cfgr.modify(|_, w| w.sw().hsi());
-                        while !self.0.cfgr.read().sws().is_hsi() {}
+                        self.cfgr().modify(|_, w| w.sw().hsi());
+                        while !self.cfgr().read().sws().is_hsi() {}
                     }
                 }
                 SystemClockConfig::HSE(_) => {
-                    if !self.0.cfgr.read().sws().is_hse() {
-                        self.0.cr.modify(|_, w| w.hseon().set_bit());
-                        while self.0.cr.read().hserdy().bit_is_clear() {}
+                    if !self.cfgr().read().sws().is_hse() {
+                        self.cr().modify(|_, w| w.hseon().set_bit());
+                        while self.cr().read().hserdy().bit_is_clear() {}
 
-                        self.0.cfgr.modify(|_, w| w.sw().hse());
-                        while !self.0.cfgr.read().sws().is_hse() {}
+                        self.cfgr().modify(|_, w| w.sw().hse());
+                        while !self.cfgr().read().sws().is_hse() {}
                     }
                 }
                 SystemClockConfig::PLL(config) => {
-                    if !self.0.cfgr.read().sws().is_pll() {
+                    if !self.cfgr().read().sws().is_pll() {
                         match config.clock_source {
                             PLLClockSource::HSI => {
-                                self.0.cr.modify(|_, w| w.hsion().set_bit());
-                                while self.0.cr.read().hsirdy().bit_is_clear() {}
+                                self.cr().modify(|_, w| w.hsion().set_bit());
+                                while self.cr().read().hsirdy().bit_is_clear() {}
                             }
                             PLLClockSource::HSE => {
-                                self.0.cr.modify(|_, w| w.hseon().set_bit());
-                                while self.0.cr.read().hserdy().bit_is_clear() {}
+                                self.cr().modify(|_, w| w.hseon().set_bit());
+                                while self.cr().read().hserdy().bit_is_clear() {}
                             }
                         }
-                        self.0.pllcfgr.write(|w| {
+                        self.pllcfgr().write(|w| {
                             w.pllsrc().bit(config.clock_source == PLLClockSource::HSE);
                             w.pllm().bits(config.pllm);
                             w.plln().bits(config.plln);
                             w.pllp().bits(config.system_clock_div_factor as _);
                             w.pllq().bits(config.pllq)
                         });
-                        self.0.cr.modify(|_, w| w.pllon().set_bit());
-                        while self.0.cr.read().pllrdy().bit_is_clear() {}
+                        self.cr().modify(|_, w| w.pllon().set_bit());
+                        while self.cr().read().pllrdy().bit_is_clear() {}
 
-                        self.0.cfgr.modify(|_, w| w.sw().pll());
-                        while !self.0.cfgr.read().sws().is_pll() {}
+                        self.cfgr().modify(|_, w| w.sw().pll());
+                        while !self.cfgr().read().sws().is_pll() {}
                     }
                 }
             }
@@ -78,19 +90,127 @@ impl RCC {
 
     pub fn configure_pllsai(&mut self, config: PLLSAIConfig) {
         unsafe {
-            self.0.cr.modify(|_, w| w.pllsaion().clear_bit());
-            while self.0.cr.read().pllsairdy().bit_is_set() {}
+            self.cr().modify(|_, w| w.pllsaion().clear_bit());
+            while self.cr().read().pllsairdy().bit_is_set() {}
 
-            self.0.pllsaicfgr.write(|w| {
+            self.pllsaicfgr().write(|w| {
                 w.pllsain().bits(config.pllsain as _);
                 w.pllsaiq().bits(config.pllsaiq as _);
                 w.pllsair().bits(config.pllsair as _)
             });
-            self.0.dckcfgr.modify(|_, w| w.pllsaidivr().bits(config.lcd_div_factor as _));
+            self.dckcfgr().modify(|_, w| w.pllsaidivr().bits(config.lcd_div_factor as _));
 
-            self.0.cr.modify(|_, w| w.pllsaion().set_bit());
-            while self.0.cr.read().pllsairdy().bit_is_clear() {}
+            self.cr().modify(|_, w| w.pllsaion().set_bit());
+            while self.cr().read().pllsairdy().bit_is_clear() {}
         }
+    }
+
+    #[inline]
+    pub fn sysclock_clock_source(&self) -> SystemClockSource {
+        SystemClockSource::from_bits(self.cfgr().read().sws().bits() as _)
+    }
+
+    #[inline]
+    pub fn pll_clock_source(&self) -> PLLClockSource {
+        PLLClockSource::from_bits(self.pllcfgr().read().pllsrc().bit() as _)
+    }
+
+    #[inline]
+    pub fn pll_division_factor(&self) -> u8 {
+        self.pllcfgr().read().pllm().bits()
+    }
+
+    #[inline]
+    pub fn pll_multiplication_factor(&self) -> u16 {
+        self.pllcfgr().read().plln().bits()
+    }
+
+    #[inline]
+    pub fn pll_sysclock_division_factor(&self) -> PLLSysClockDivisionFactor {
+        PLLSysClockDivisionFactor::from_bits(self.pllcfgr().read().pllp().bits() as _)
+    }
+
+    #[inline]
+    pub fn ahb_prescaler(&self) -> AHBPrescaler {
+        AHBPrescaler::from_bits(self.cfgr().read().hpre().bits() as _)
+    }
+
+    #[inline]
+    pub fn apb1_prescaler(&self) -> APBPrescaler {
+        APBPrescaler::from_bits(self.cfgr().read().ppre1().bits() as _)
+    }
+
+    #[inline]
+    pub fn apb2_prescaler(&self) -> APBPrescaler {
+        APBPrescaler::from_bits(self.cfgr().read().ppre2().bits() as _)
+    }
+
+    #[inline]
+    pub fn sysclk_freq(&self) -> u32 {
+        match self.sysclock_clock_source() {
+            SystemClockSource::HSI => 16_000_000u32,
+            SystemClockSource::HSE => EXTERNAL_OSC_FREQ.get(),
+            SystemClockSource::PLL => {
+                let freq = match self.pll_clock_source() {
+                    PLLClockSource::HSI => 16_000_000u32,
+                    PLLClockSource::HSE => EXTERNAL_OSC_FREQ.get(),
+                };
+
+                let pllp = match self.pll_sysclock_division_factor() {
+                    PLLSysClockDivisionFactor::DividedBy2 => 2,
+                    PLLSysClockDivisionFactor::DividedBy4 => 4,
+                    PLLSysClockDivisionFactor::DividedBy6 => 6,
+                    PLLSysClockDivisionFactor::DividedBy8 => 8,
+                };
+
+                freq.saturating_div(self.pll_division_factor() as u32)
+                    .saturating_mul(self.pll_multiplication_factor() as u32)
+                    .saturating_div(pllp)
+            }
+        }
+    }
+
+    #[inline]
+    pub fn hclk_freq(&self) -> u32 {
+        let ahb_div = match self.ahb_prescaler() {
+            AHBPrescaler::NotDivided => 1,
+            AHBPrescaler::DividedBy2 => 2,
+            AHBPrescaler::DividedBy4 => 4,
+            AHBPrescaler::DividedBy8 => 8,
+            AHBPrescaler::DividedBy16 => 16,
+            AHBPrescaler::DividedBy64 => 64,
+            AHBPrescaler::DividedBy128 => 128,
+            AHBPrescaler::DividedBy256 => 256,
+            AHBPrescaler::DividedBy512 => 512,
+        };
+
+        self.sysclk_freq() / ahb_div
+    }
+
+    #[inline]
+    pub fn pclk1_freq(&self) -> u32 {
+        let apb1_div = match self.apb1_prescaler() {
+            APBPrescaler::NotDivided => 1,
+            APBPrescaler::DividedBy2 => 2,
+            APBPrescaler::DividedBy4 => 4,
+            APBPrescaler::DividedBy8 => 8,
+            APBPrescaler::DividedBy16 => 16,
+        };
+
+        self.hclk_freq() / apb1_div
+    }
+
+    #[inline]
+    pub fn pclk2_freq(&self) -> u32 {
+        let apb2_div = match self.apb2_prescaler() {
+            APBPrescaler::NotDivided => 1,
+            APBPrescaler::DividedBy2 => 2,
+            APBPrescaler::DividedBy4 => 4,
+            APBPrescaler::DividedBy8 => 8,
+            APBPrescaler::DividedBy16 => 16,
+        };
+
+        self.hclk_freq() / apb2_div
     }
 }
 

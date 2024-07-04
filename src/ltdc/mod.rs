@@ -1,54 +1,56 @@
-use cortex_m::{ interrupt::Nr, peripheral::nvic };
-use pac::interrupt;
-use stm32f429::NVIC;
+use core::ops::Deref;
 
-use crate::{ InterruptHandler, Peripheral, PeripheralRef };
+use crate::{ pac::{ self, interrupt }, rcc::RCC, InterruptHandler, Peripheral, PeripheralRef };
 
 pub struct LTDC(pac::ltdc::RegisterBlock);
+
+impl Deref for LTDC {
+    type Target = pac::ltdc::RegisterBlock;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 impl PeripheralRef for LTDC {
     type Output = LTDC;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::LTDC::ptr() as *mut _) }
+        unsafe { (pac::LTDC::PTR as *mut Self::Output).as_mut().unwrap() }
     }
 }
 
 impl Peripheral for LTDC {
     fn enable_clock(&mut self) {
-        unsafe {
-            let rcc = &*pac::RCC::ptr();
-            rcc.apb2enr.modify(|_, w| w.ltdcen().set_bit());
-        }
+        RCC::take()
+            .apb2enr()
+            .modify(|_, w| w.ltdcen().set_bit());
     }
 
     fn disable_clock(&mut self) {
-        unsafe {
-            let rcc = &*pac::RCC::ptr();
-            rcc.apb2enr.modify(|_, w| w.ltdcen().clear_bit());
-        }
+        RCC::take()
+            .apb2enr()
+            .modify(|_, w| w.ltdcen().clear_bit());
     }
 
     fn reset(&mut self) {
-        unsafe {
-            let rcc = &*pac::RCC::ptr();
-            rcc.apb2rstr.modify(|_, w| w.ltdcrst().set_bit());
-            rcc.apb2rstr.modify(|_, w| w.ltdcrst().clear_bit());
-        }
+        let rcc = RCC::take();
+        rcc.apb2rstr().modify(|_, w| w.ltdcrst().set_bit());
+        rcc.apb2rstr().modify(|_, w| w.ltdcrst().clear_bit());
     }
 }
 
 impl LTDC {
     pub fn enable(&mut self) {
-        self.0.gcr.modify(|_, w| w.ltdcen().set_bit());
+        self.0.gcr().modify(|_, w| w.ltdcen().set_bit());
     }
 
     pub fn disable(&mut self) {
-        self.0.gcr.modify(|_, w| w.ltdcen().clear_bit());
+        self.0.gcr().modify(|_, w| w.ltdcen().clear_bit());
     }
 
     pub fn is_enabled(&self) -> bool {
-        self.0.gcr.read().ltdcen().bit()
+        self.0.gcr().read().ltdcen().bit()
     }
 
     pub fn init(&mut self, conf: LTDCConfig) {
@@ -66,9 +68,6 @@ impl LTDC {
             conf.horizontal_sync_polarity
         );
 
-        let mut val = self.0.gcr.read().bits();
-        val |= 1;
-
         // configure synchronous timings
         self.set_sync_timings(
             conf.active_width,
@@ -85,28 +84,22 @@ impl LTDC {
         self.set_background_color(conf.background_color);
 
         // enable interrupts
-        // self.regs.ier.write(|w| {
-        //     w.lie().set_bit();
-        //     w.fuie().set_bit();
-        //     w.terrie().set_bit();
-        //     w.rrie().set_bit()
-        // });
+        self.ier().write(|w| {
+            w.lie().set_bit();
+            w.fuie().set_bit();
+            w.terrie().set_bit();
+            w.rrie().set_bit()
+        });
 
         unsafe {
-            let lcd_tft_irqn = interrupt::LCD_TFT.nr();
-            let lcd_tft1_irqn = interrupt::LCD_TFT_1.nr();
-            let regs = &mut *(NVIC::ptr() as *mut nvic::RegisterBlock);
-            regs.iser[(lcd_tft_irqn as usize) / 32].modify(|r| r | (0b1u32 << lcd_tft_irqn % 32));
-            regs.iser[(lcd_tft1_irqn as usize) / 32].modify(|r| r | (0b1u32 << lcd_tft1_irqn % 32));
+            pac::NVIC::unmask(interrupt::LCD_TFT);
+            pac::NVIC::unmask(interrupt::LCD_TFT_1);
         }
 
         // reload the shadow registers
 
         // enable LCD-TFT controller
         self.enable();
-        unsafe {
-        self.0.gcr.write(|w| w.bits(val));
-        }
     }
 
     pub fn set_register_reload_event_handler(&mut self, f: InterruptHandler) {
@@ -135,13 +128,13 @@ impl LTDC {
 
     pub fn set_background_color(&mut self, color: Color) {
         unsafe {
-            self.0.bccr.modify(|_, w| { w.bc().bits(color.into_rgb888()) });
+            self.0.bccr().modify(|_, w| { w.bits(color.into_rgb888()) });
         }
     }
 
     pub fn enable_dither(&mut self, color: Color) {
         unsafe {
-            self.0.gcr.modify(|_, w| {
+            self.0.gcr().modify(|_, w| {
                 w.bits(
                     (((color.1 as u32) & 0b111) << 12) |
                         (((color.2 as u32) & 0b111) << 8) |
@@ -153,15 +146,21 @@ impl LTDC {
     }
 
     pub fn disable_dither(&mut self) {
-        self.0.gcr.modify(|_, w| { w.den().clear_bit() })
+        self.0.gcr().modify(|_, w| { w.den().clear_bit() })
     }
 
     pub fn layer1_enable(&mut self) {
-        self.0.l1cr.modify(|_, w| w.len().set_bit())
+        self.0
+            .layer1()
+            .cr()
+            .modify(|_, w| w.len().set_bit())
     }
 
     pub fn layer1_disable(&mut self) {
-        self.0.l1cr.modify(|_, w| w.len().clear_bit())
+        self.0
+            .layer1()
+            .cr()
+            .modify(|_, w| w.len().clear_bit())
     }
 
     pub fn layer1_configure(
@@ -174,58 +173,36 @@ impl LTDC {
         default_color: Color,
         image_buffer_address: *const u8
     ) {
-        unsafe {
-            // configure layer window
-            let ahbp = self.0.bpcr.read().ahbp().bits();
-            self.0.l1whpcr.write(|w| {
-                w.whstpos().bits(ahbp + x + 1);
-                w.whsppos().bits(ahbp + x + width)
-            });
+        self.layer_configure(
+            self.0.layer1(),
+            x,
+            y,
+            width,
+            height,
+            pixel_format,
+            default_color,
+            image_buffer_address
+        );
 
-            let avbp = self.0.bpcr.read().avbp().bits();
-            self.0.l1wvpcr.write(|w| {
-                w.wvstpos().bits(avbp + y + 1);
-                w.wvsppos().bits(avbp + y + height)
-            });
+        // enable layer
+        self.layer1_enable();
 
-            // set pixel format
-            self.0.l1pfcr.write(|w| w.pf().bits(pixel_format as _));
-
-            // set color frame buffer start address
-            self.0.l1cfbar.write(|w| w.bits(image_buffer_address as u32));
-
-            // set line length and pitch
-            let pitch = width * (pixel_format.byte_len() as u16);
-            self.0.l1cfblr.write(|w| {
-                w.cfbll().bits(pitch + 3);
-                w.cfbp().bits(pitch)
-            });
-
-            // set number of lines
-            self.0.l1cfblnr.write(|w| w.cfblnbr().bits(height));
-
-            // load CLUT if needed
-
-            // set alpha constant
-            self.0.l1cacr.modify(|_, w| w.consta().bits(255));
-
-            // configure default color and blending factors if needed
-            self.0.l1dccr.write(|w| w.bits(default_color.into_argb8888()));
-
-            // enable layer
-            self.0.l1cr.modify(|_, w| w.len().set_bit());
-
-            // reload shadow registers
-            self.0.srcr.modify(|_, w| w.imr().set_bit());
-        }
+        // reload shadow registers
+        self.0.srcr().modify(|_, w| w.imr().set_bit());
     }
 
     pub fn layer2_enable(&mut self) {
-        self.0.l2cr.modify(|_, w| w.len().set_bit())
+        self.0
+            .layer2()
+            .cr()
+            .modify(|_, w| w.len().set_bit())
     }
 
     pub fn layer2_disable(&mut self) {
-        self.0.l2cr.modify(|_, w| w.len().clear_bit())
+        self.0
+            .layer2()
+            .cr()
+            .modify(|_, w| w.len().clear_bit())
     }
 
     pub fn layer2_configure(
@@ -238,50 +215,76 @@ impl LTDC {
         default_color: Color,
         image_buffer_address: *const u8
     ) {
-        unsafe {
-            // configure layer window
-            let ahbp = self.0.bpcr.read().ahbp().bits();
-            self.0.l2whpcr.write(|w| {
-                w.whstpos().bits(ahbp + x + 1);
-                w.whsppos().bits(ahbp + x + width)
-            });
+        self.layer_configure(
+            self.0.layer2(),
+            x,
+            y,
+            width,
+            height,
+            pixel_format,
+            default_color,
+            image_buffer_address
+        );
 
-            let avbp = self.0.bpcr.read().avbp().bits();
-            self.0.l2wvpcr.write(|w| {
-                w.wvstpos().bits(avbp + y + 1);
-                w.wvsppos().bits(avbp + y + height)
-            });
+        // enable layer
+        self.layer2_enable();
 
-            // set pixel format
-            self.0.l2pfcr.write(|w| w.pf().bits(pixel_format as _));
+        // reload shadow registers
+        self.0.srcr().modify(|_, w| w.imr().set_bit());
+    }
 
-            // set color frame buffer start address
-            self.0.l2cfbar.write(|w| w.bits(image_buffer_address as u32));
+    fn layer_configure(
+        &self,
+        layer: &pac::ltdc::LAYER,
+        x: u16,
+        y: u16,
+        width: u16,
+        height: u16,
+        pixel_format: PixelFormat,
+        default_color: Color,
+        image_buffer_address: *const u8
+    ) {
+        // configure layer window
+        let ahbp = self.0.bpcr().read().ahbp().bits();
+        layer.whpcr().write(|w| {
+            w.whstpos().set(ahbp + x + 1);
+            w.whsppos().set(ahbp + x + width)
+        });
 
-            // set line length and pitch
-            let pitch = width * (pixel_format.byte_len() as u16);
-            self.0.l2cfblr.write(|w| {
-                w.cfbll().bits(pitch + 3);
-                w.cfbp().bits(pitch)
-            });
+        let avbp = self.0.bpcr().read().avbp().bits();
+        layer.wvpcr().write(|w| {
+            w.wvstpos().set(avbp + y + 1);
+            w.wvsppos().set(avbp + y + height)
+        });
 
-            // set number of lines
-            self.0.l2cfblnr.write(|w| w.cfblnbr().bits(height));
+        // set pixel format
+        layer.pfcr().write(|w| w.pf().set(pixel_format as _));
 
-            // load CLUT if needed
+        // set color frame buffer start address
+        layer.cfbar().write(|w| w.set(image_buffer_address as u32));
 
-            // set alpha constant
-            self.0.l2cacr.modify(|_, w| w.consta().bits(255));
+        // set line length and pitch
+        let pitch = width * (pixel_format.byte_len() as u16);
+        layer.cfblr().write(|w| {
+            w.cfbll().set(pitch + 3);
+            w.cfbp().set(pitch)
+        });
 
-            // configure default color and blending factors if needed
-            self.0.l2dccr.write(|w| w.bits(default_color.into_argb8888()));
+        // set number of lines
+        layer.cfblnr().write(|w| w.cfblnbr().set(height));
 
-            // enable layer
-            self.0.l2cr.modify(|_, w| w.len().set_bit());
+        // load CLUT if needed
 
-            // reload shadow registers
-            self.0.srcr.modify(|_, w| w.imr().set_bit());
-        }
+        // set alpha constant
+        layer.cacr().modify(|_, w| w.consta().set(255));
+
+        // configure default color and blending factors if needed
+        layer.dccr().write(|w| {
+            w.dcalpha().set(default_color.0);
+            w.dcred().set(default_color.1);
+            w.dcgreen().set(default_color.2);
+            w.dcblue().set(default_color.3)
+        });
     }
 
     fn set_sync_timings(
@@ -295,24 +298,22 @@ impl LTDC {
         hfp: u16,
         vfp: u16
     ) {
-        unsafe {
-            self.0.sscr.modify(|_, w| {
-                w.hsw().bits(hsw - 1);
-                w.vsh().bits(vsh - 1)
-            });
-            self.0.bpcr.write(|w| {
-                w.ahbp().bits(hsw + (hbp as u16) - 1);
-                w.avbp().bits(vsh + (vbp as u16) - 1)
-            });
-            self.0.awcr.write(|w| {
-                w.aav().bits(hsw + (hbp as u16) + width - 1);
-                w.aah().bits(vsh + (vbp as u16) + height - 1)
-            });
-            self.0.twcr.write(|w| {
-                w.totalw().bits(hsw + (hbp as u16) + width + (hfp as u16) - 1);
-                w.totalh().bits(vsh + (vbp as u16) + height + (vfp as u16) - 1)
-            });
-        }
+        self.0.sscr().modify(|_, w| {
+            w.hsw().set(hsw - 1);
+            w.vsh().set(vsh - 1)
+        });
+        self.0.bpcr().write(|w| {
+            w.ahbp().set(hsw + (hbp as u16) - 1);
+            w.avbp().set(vsh + (vbp as u16) - 1)
+        });
+        self.0.awcr().write(|w| {
+            w.aaw().set(hsw + (hbp as u16) + width - 1);
+            w.aah().set(vsh + (vbp as u16) + height - 1)
+        });
+        self.0.twcr().write(|w| {
+            w.totalw().set(hsw + (hbp as u16) + width + (hfp as u16) - 1);
+            w.totalh().set(vsh + (vbp as u16) + height + (vfp as u16) - 1)
+        });
     }
 
     fn set_signal_polarity(
@@ -322,7 +323,7 @@ impl LTDC {
         vspol: Polarity,
         hspol: Polarity
     ) {
-        self.0.gcr.modify(|_, w| {
+        self.0.gcr().modify(|_, w| {
             w.pcpol().bit(pcpol == PixelClockPolarity::Inverted);
             w.depol().bit(depol == Polarity::ActiveHigh);
             w.vspol().bit(vspol == Polarity::ActiveHigh);
@@ -470,46 +471,45 @@ const FIFO_UNDERRUN_HANDLER: usize = 1;
 const TRANSFER_ERROR_HANDLER: usize = 2;
 const REGISTER_RELOAD_HANDLER: usize = 3;
 
-/// LTDC global interrupt
+/// LTDC global event interrupt
 #[interrupt]
 fn LCD_TFT() {
     let ltdc = LTDC::take();
-    if ltdc.0.isr.read().rrif().bit_is_set() {
-        ltdc.0.ier.modify(|_, w| w.rrie().clear_bit());
-        ltdc.0.icr.write(|w| w.crrif().set_bit());
+    if ltdc.isr().read().rrif().bit_is_set() {
+        ltdc.ier().modify(|_, w| w.rrie().clear_bit());
+        ltdc.icr().write(|w| w.crrif().bit(true));
 
         unsafe {
             (IRQ_HANDLERS[REGISTER_RELOAD_HANDLER])();
         }
     }
 
-    if ltdc.0.isr.read().lif().bit_is_set() {
-        ltdc.0.ier.modify(|_, w| w.lie().clear_bit());
-        ltdc.0.icr.write(|w| w.clif().set_bit());
+    if ltdc.isr().read().lif().bit_is_set() {
+        ltdc.ier().modify(|_, w| w.lie().clear_bit());
+        ltdc.icr().write(|w| w.clif().bit(true));
 
         unsafe {
             (IRQ_HANDLERS[LINE_INTERRUPT_HANDLER])();
         }
     }
-    
 }
 
 /// LTDC global error interrupt
 #[interrupt]
 fn LCD_TFT_1() {
     let ltdc = LTDC::take();
-    if ltdc.0.isr.read().terrif().bit_is_set() {
-        ltdc.0.ier.modify(|_, w| w.terrie().clear_bit());
-        ltdc.0.icr.write(|w| w.cterrif().set_bit());
+    if ltdc.isr().read().terrif().bit_is_set() {
+        ltdc.ier().modify(|_, w| w.terrie().clear_bit());
+        ltdc.icr().write(|w| w.cterrif().bit(true));
 
         unsafe {
             (IRQ_HANDLERS[TRANSFER_ERROR_HANDLER])();
         }
     }
 
-    if ltdc.0.isr.read().fuif().bit_is_set() {
-        ltdc.0.ier.modify(|_, w| w.fuie().clear_bit());
-        ltdc.0.icr.write(|w| w.cfuif().set_bit());
+    if ltdc.isr().read().fuif().bit_is_set() {
+        ltdc.ier().modify(|_, w| w.fuie().clear_bit());
+        ltdc.icr().write(|w| w.cfuif().bit(true));
 
         unsafe {
             (IRQ_HANDLERS[FIFO_UNDERRUN_HANDLER])();

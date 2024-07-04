@@ -1,14 +1,20 @@
 pub mod pin;
 
-use core::ops::{ BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Not };
+use core::{ops::{ BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Deref, Not }, ptr::addr_of};
 
-use pac::gpioa;
-
-use crate::{ Peripheral, PeripheralRef };
+use crate::{ pac, rcc::RCC, Peripheral, PeripheralRef };
 
 use self::pin::{ OutputType, Pin, PinConfig, PinMode, Pull, Speed };
 
-pub struct Port(gpioa::RegisterBlock);
+pub struct Port(pac::gpioa::RegisterBlock);
+
+impl Deref for Port {
+    type Target = pac::gpioa::RegisterBlock;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
 pub struct GPIOA;
 
@@ -16,7 +22,7 @@ impl PeripheralRef for GPIOA {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOA::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOA::PTR as *mut _) }
     }
 }
 
@@ -26,7 +32,7 @@ impl PeripheralRef for GPIOB {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOB::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOB::PTR as *mut _) }
     }
 }
 
@@ -36,7 +42,7 @@ impl PeripheralRef for GPIOC {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOC::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOC::PTR as *mut _) }
     }
 }
 
@@ -46,7 +52,7 @@ impl PeripheralRef for GPIOD {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOD::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOD::PTR as *mut _) }
     }
 }
 
@@ -56,7 +62,7 @@ impl PeripheralRef for GPIOE {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOE::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOE::PTR as *mut _) }
     }
 }
 
@@ -66,7 +72,7 @@ impl PeripheralRef for GPIOF {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOF::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOF::PTR as *mut _) }
     }
 }
 
@@ -76,7 +82,7 @@ impl PeripheralRef for GPIOG {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOG::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOG::PTR as *mut _) }
     }
 }
 
@@ -86,7 +92,7 @@ impl PeripheralRef for GPIOH {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOH::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOH::PTR as *mut _) }
     }
 }
 
@@ -96,7 +102,7 @@ impl PeripheralRef for GPIOI {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOI::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOI::PTR as *mut _) }
     }
 }
 
@@ -106,7 +112,7 @@ impl PeripheralRef for GPIOJ {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOJ::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOJ::PTR as *mut _) }
     }
 }
 
@@ -116,7 +122,7 @@ impl PeripheralRef for GPIOK {
     type Output = Port;
 
     fn take() -> &'static mut Self::Output {
-        unsafe { &mut *(pac::GPIOK::ptr() as *mut _) }
+        unsafe { &mut *(pac::GPIOK::PTR as *mut _) }
     }
 }
 
@@ -124,28 +130,28 @@ impl Peripheral for Port {
     #[inline]
     fn enable_clock(&mut self) {
         unsafe {
-            let rcc = &*pac::RCC::ptr();
+            let rcc = RCC::take();
             let p = self.get_port_num();
-            rcc.ahb1enr.modify(#[inline] |r, w| w.bits(r.bits() | (1u32 << p)));
+            rcc.ahb1enr().modify(#[inline] |r, w| w.bits(r.bits() | (1u32 << p)));
         }
     }
 
     #[inline]
     fn disable_clock(&mut self) {
         unsafe {
-            let rcc = &*pac::RCC::ptr();
+            let rcc = RCC::take();
             let p = self.get_port_num();
-            rcc.ahb1enr.modify(#[inline] |r, w| w.bits(r.bits() & !(1u32 << p)));
+            rcc.ahb1enr().modify(#[inline] |r, w| w.bits(r.bits() & !(1u32 << p)));
         }
     }
 
     #[inline]
     fn reset(&mut self) {
         unsafe {
-            let rcc = &*pac::RCC::ptr();
+            let rcc = RCC::take();
             let p = self.get_port_num();
-            rcc.ahb1rstr.modify(#[inline] |r, w| w.bits(r.bits() | (1u32 << p)));
-            rcc.ahb1rstr.modify(#[inline] |r, w| w.bits(r.bits() & !(1u32 << p)));
+            rcc.ahb1rstr().modify(#[inline] |r, w| w.bits(r.bits() | (1u32 << p)));
+            rcc.ahb1rstr().modify(#[inline] |r, w| w.bits(r.bits() & !(1u32 << p)));
         }
     }
 }
@@ -156,9 +162,9 @@ impl Port {
         assert!(pin < 16);
 
         unsafe {
-            let addr = self as *const _;
+            let addr = self as *const Self;
             Pin {
-                port: &mut *(addr as *mut _),
+                port: addr.as_ref().unwrap(),
                 pin,
             }
         }
@@ -166,19 +172,19 @@ impl Port {
 
     #[inline]
     pub fn read_input_pins(&self) -> PinMask {
-        self.0.idr.read().bits().into()
+        self.0.idr().read().bits().into()
     }
 
     #[inline]
     pub fn read_output_pins(&self) -> PinMask {
-        self.0.odr.read().bits().into()
+        self.0.odr().read().bits().into()
     }
 
     #[inline]
     pub fn set_output_pins(&mut self, pins: impl Into<PinMask>) {
         let mask = u32::from(pins.into());
         unsafe {
-            self.0.bsrr.write(|w| w.bits(mask));
+            self.0.bsrr().write(|w| w.bits(mask));
         }
     }
 
@@ -186,7 +192,7 @@ impl Port {
     pub fn reset_output_pins(&mut self, pins: impl Into<PinMask>) {
         let mask = u32::from(pins.into());
         unsafe {
-            self.0.bsrr.write(|w| w.bits(mask << 16));
+            self.0.bsrr().write(|w| w.bits(mask << 16));
         }
     }
 
@@ -194,8 +200,8 @@ impl Port {
     pub fn toggle_output_pins(&mut self, pins: impl Into<PinMask>) {
         let mask = u32::from(pins.into());
         unsafe {
-            let r = self.0.odr.read().bits();
-            self.0.bsrr.write(|w| w.bits(((r & mask) << 16) | (!r & mask)));
+            let r = self.0.odr().read().bits();
+            self.0.bsrr().write(|w| w.bits(((r & mask) << 16) | (!r & mask)));
         }
     }
 
@@ -270,7 +276,7 @@ impl Port {
         let mask = u32::from(pins.into());
 
         unsafe {
-            self.0.moder.modify(|r, w| {
+            self.0.moder().modify(|r, w| {
                 w.bits(Self::write_2bit_value_by_mask(r.bits(), mode as u32, mask))
             });
         }
@@ -281,7 +287,7 @@ impl Port {
         let mask = u32::from(pins.into());
 
         unsafe {
-            self.0.otyper.modify(|r, w| {
+            self.0.otyper().modify(|r, w| {
                 match otype {
                     OutputType::PushPull => w.bits(r.bits() & !mask),
                     OutputType::OpenDrain => w.bits(r.bits() | mask),
@@ -295,7 +301,7 @@ impl Port {
         let mask = u32::from(pins.into());
 
         unsafe {
-            self.0.ospeedr.modify(|r, w| {
+            self.0.ospeedr().modify(|r, w| {
                 w.bits(Self::write_2bit_value_by_mask(r.bits(), speed as u32, mask))
             });
         }
@@ -306,7 +312,7 @@ impl Port {
         let mask = u32::from(pins.into());
 
         unsafe {
-            self.0.pupdr.modify(|r, w| {
+            self.0.pupdr().modify(|r, w| {
                 w.bits(Self::write_2bit_value_by_mask(r.bits(), pull as u32, mask))
             });
         }
@@ -317,7 +323,7 @@ impl Port {
         let mut pins = u32::from(pins.into());
 
         unsafe {
-            self.0.afrl.modify(|r, w| {
+            self.0.afrl().modify(|r, w| {
                 let mut bits = r.bits();
                 let mut mask = 0b1111u32;
                 let mut value = func as u32;
@@ -332,10 +338,8 @@ impl Port {
                 }
                 w.bits(bits)
             });
-        }
 
-        unsafe {
-            self.0.afrh.modify(|r, w| {
+            self.0.afrh().modify(|r, w| {
                 let mut bits = r.bits();
                 let mut mask = 0b1111u32;
                 let mut value = func as u32;
@@ -369,8 +373,8 @@ impl Port {
         bits
     }
 
-    unsafe fn get_port_num(&self) -> u32 {
-        ((self as *const _ as u32) - (pac::GPIOA::ptr() as u32)) / 0x400u32
+    unsafe fn get_port_num(&self) -> isize {
+        addr_of!(self.0).byte_offset_from(pac::GPIOA::PTR) / 0x400
     }
 }
 
